@@ -10,12 +10,11 @@ TAG=$1;
 TAG_BUILD=$TAG-build;
 
 if [ -d $INSTALL_ROOT/instances/$TAG ]; then
-	echo "[33m → [4m$INSTALL_ROOT/instances/$TAG[24m exists and will be deleted.";
-	read -p "[0m   Continue installation? (y/N) " a;
+	echo "[33m → [4m$INSTALL_ROOT/instances/$TAG[24m exists and will be deleted.[0m";
+	read -p "   Continue installation? (y/N) " a;
 	if [ "$a" = "y" -o "$a" = "Y" ]; then
 		rm -rf $INSTALL_ROOT/instances/$TAG;
 	else
-		echo "[31m → Exiting[0m";
 		exit 1;
 	fi;
 fi;
