@@ -1,0 +1,5 @@
+instances/*
+virtualenvs/*
+!.gitkeep
+
+*.swp
