@@ -1,5 +1,6 @@
 instances/*
 virtualenvs/*
+config/config_secret.sh
 !.gitkeep
 
 *.swp
