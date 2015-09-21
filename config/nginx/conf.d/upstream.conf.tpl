@@ -1,0 +1,3 @@
+upstream zdsappserver {
+    # DYNAMIC UPSTREAM
+}
