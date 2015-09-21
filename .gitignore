@@ -1,6 +1,7 @@
 instances/*
 virtualenvs/*
 config/config_secret.sh
+config/nginx/conf.d/upstream.conf
 !.gitkeep
 
 *.swp
