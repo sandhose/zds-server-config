@@ -14,25 +14,32 @@ fi;
 CONF=$CONFIG_ROOT/nginx/conf.d/upstream.conf;
 CONF_TPL=$CONFIG_ROOT/nginx/conf.d/upstream.conf.tpl;
 VERSION=$1;
-
-UPSTREAMS="";
+SOCKET=/var/run/zds-$VERSION.socket;
+SOCKETS="";
 
 if [ -f $CONF ]; then
-    # 1. Extract old upstreams
-    # 2. Remove 1st and last line + "down" + current version
-    # 3. sort + uniq
-    # 4. Add all down
-    UPSTREAMS="$(\
+    # 1. Extract upstreams block
+    # 2. Extract versions
+    SOCKETS="$(\
         sed -n '/BEGIN DYNAMIC UPSTREAMS/,/END DYNAMIC UPSTREAMS/p' $CONF | \
-	sed -e '1d' -e '$d' -e '/^$/d' -e 's/ down//g' -e "/server \/var\/run\/zds-$VERSION.socket/d" | \
-        sort | \
-        uniq | \
-        sed 's/server \(.*\);/server \1 down;/' \
-    )\n";
+        perl -n -e'/server ([[:alnum:]\/\.-]+)( down)?\;/ && print "$1\\n"' \
+    )";
 fi
 
-UPSTREAMS="  server /var/run/zds-$VERSION.socket;\n$UPSTREAMS";
+SOCKETS="$SOCKETS$SOCKET";
+
+SOCKETS=$(echo $SOCKETS | sort -u);
+
+UPSTREAMS="";
+for S in $SOCKETS;
+do
+	if [ $S = $SOCKET ]; then
+		UPSTREAMS="$UPSTREAMS  server $S;\\n"
+	else
+		UPSTREAMS="$UPSTREAMS  server $S down;\\n"
+	fi;
+done;
+
 BLOCK="# BEGIN DYNAMIC UPSTREAMS\n\
-$UPSTREAMS
-  # END DYNAMIC UPSTREAMS";
-cat $CONF_TPL | perl -pe "s/  # DYNAMIC UPSTREAM/$(echo $BLOCK | sed -e 's/\\/\\\\/g' -e 's/\//\\\//g' -e 's/&/\\\&/g')/" > $CONF;
+$UPSTREAMS  # END DYNAMIC UPSTREAMS";
+cat $CONF_TPL | perl -pe "s/  # DYNAMIC UPSTREAM/$(echo "$BLOCK" | sed -e 's/\\/\\\\/g' -e 's/\//\\\//g' -e 's/&/\\\&/g')/";
