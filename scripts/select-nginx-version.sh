@@ -7,10 +7,6 @@ fi;
 
 . $(dirname $0)/include.sh;
 
-###
-# TODO: Clean up + doc
-###
-
 CONF=$CONFIG_ROOT/nginx/conf.d/upstream.conf;
 CONF_TPL=$CONFIG_ROOT/nginx/conf.d/upstream.conf.tpl;
 VERSION=$1;
@@ -18,17 +14,23 @@ SOCKET=/var/run/zds-$VERSION.socket;
 SOCKETS="";
 
 if [ -f $CONF ]; then
-    # 1. Extract upstreams block
-    # 2. Extract versions
-    SOCKETS="$(\
-        sed -n '/BEGIN DYNAMIC UPSTREAMS/,/END DYNAMIC UPSTREAMS/p' $CONF | \
-        perl -n -e'/server ([[:alnum:]\/\.-]+)( down)?\;/ && print "$1\\n"' \
-    )";
-fi
+	# 1. Extract upstreams block
+	# 2. Extract versions
+	SOCKETS="$(\
+		sed -n '/BEGIN DYNAMIC UPSTREAMS/,/END DYNAMIC UPSTREAMS/p' $CONF | \
+		perl -n -e'/server ([[:alnum:]\/\.-]+)( down)?\;/ && print "$1\\n"' \
+	)";
+	COUNT=$(echo $SOCKETS | sed '/^\s*$/d' | wc -l);
+	echo "\033[32m → $COUNT old upstreams found\033[0m";
+else
+	echo "\033[33m → No old upstream conf file found\033[0m";
+fi;
 
 SOCKETS="$SOCKETS$SOCKET";
 
-SOCKETS=$(echo $SOCKETS | sort -u);
+SOCKETS=$(echo $SOCKETS | sort -u | perl -pe "s/\\n/ /g");
+
+echo $SOCKETS;
 
 UPSTREAMS="";
 for S in $SOCKETS;
@@ -42,4 +44,7 @@ done;
 
 BLOCK="# BEGIN DYNAMIC UPSTREAMS\n\
 $UPSTREAMS  # END DYNAMIC UPSTREAMS";
-cat $CONF_TPL | perl -pe "s/  # DYNAMIC UPSTREAM/$(echo "$BLOCK" | sed -e 's/\\/\\\\/g' -e 's/\//\\\//g' -e 's/&/\\\&/g')/";
+
+cat $CONF_TPL | perl -pe "s/  # DYNAMIC UPSTREAM/$(echo "$BLOCK" | sed -e 's/\\/\\\\/g' -e 's/\//\\\//g')/" > $CONF;
+
+echo "\033[32m → \033[4m$CONF\033[24m updated\033[0m";
