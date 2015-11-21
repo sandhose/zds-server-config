@@ -1,0 +1,18 @@
+[Unit]
+Description=Zeste de Savoir %I - Gunicorn
+Requires=zestedesavoir@%I.socket
+After=network.target
+
+[Service]
+PIDFile=/run/zestedesavoir/%I-pid
+User=sandhose
+Group=sandhose
+#WorkingDirectory=/opt/zestedesavoir/instances/%I/
+#RuntimeDirectory=/run/zestedesavoir/%I/
+ExecStart=/bin/sh /opt/zestedesavoir/scripts/start-gunicorn.sh %I
+ExecReload=/bin/kill -s HUM $MAINPID
+ExecStop=/bin/kill -s TERM $MAINPID
+#PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

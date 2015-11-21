@@ -1,0 +1,10 @@
+[Unit]
+Description=Zeste de Savoir %I - Socket
+
+[Socket]
+ListenStream=/run/zestedesavoir/%I-socket
+SocketUser=sandhose
+SocketGroup=sandhose
+
+[Install]
+WantedBy=sockets.target

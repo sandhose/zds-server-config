@@ -1,0 +1,8 @@
+[Unit]
+Description=Reindex SOLR Service
+
+[Service]
+Type=simple
+User=zds
+Group=zds
+ExecStart=/opt/zestedesavoir/virtualenvs/%i/bin/python /opt/zestedesavoir/instances/%i/manage.py update_index

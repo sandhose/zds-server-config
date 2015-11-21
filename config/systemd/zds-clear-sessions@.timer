@@ -1,0 +1,9 @@
+[Unit]
+Description=Clear Django Sessions Timer
+
+[Timer]
+OnCalendar=daily
+Persistent=true
+
+[Install]
+WantedBy=timers.target

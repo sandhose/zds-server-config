@@ -1,70 +1,54 @@
+include conf.d/upstream.conf;
+
 server {
-    listen [::]:80;
-    listen 80;
+    listen [::]:8080;
+    listen 8080;
 
     server_name preprod.zestedesavoir.com;
     rewrite ^(.*) $scheme://beta.zestedesavoir.com$1 permanent;
 }
 
 server {
-    listen [::]:80 ipv6only=on;
-    listen [::]:443 ssl ipv6only=on;
-    listen 80;
-    listen 443 ssl;
+    listen [::]:8000 ipv6only=on;
+    listen [::]:4443 ssl ipv6only=on;
+    listen 8000;
+    listen 4443 ssl;
 
     include conf.d/ssl.conf;
     include conf.d/auth.conf;
     include conf.d/gzip.conf;
     include conf.d/antispam.conf;
-    include conf.d/upstream.conf;
 
-    server_name beta.zestedesavoir.com;
-    access_log /opt/zdsenv/logs/nginx-access.log;
-    error_log /opt/zdsenv/logs/nginx-error.log;
+    server_name server.sandhose.fr;
+    access_log /var/log/zestedesavoir/nginx-access.log;
+    error_log /var/log/zestedesavoir/nginx-error.log;
 
-    location /author-files/ {
-        index index.html index.php;
-        alias /home/zds/tutos_sdzv3/script/;
-        include php.fast.conf;
-    }
+    root /opt/zestedesavoir/data/static-files/;
+    autoindex off;
+    try_files $uri $uri/ @app;
 
-    location = /robots.txt {
-        alias /opt/zdsenv/ZesteDeSavoir/robots.txt;
-    }
+    #location / {
+    #    if ($uri !~ \. ){
+    #        rewrite ^(.*[^/])$ $1/ permanent;
+    #    }
+    #    rewrite ^/teasing/$ / permanent;
+    #    client_max_body_size 100M;
 
-    location /static/ {
-        alias /opt/zdsenv/ZesteDeSavoir/static/;
-        expires 1y;
-        add_header Pragma public;
-        add_header Cache-Control "public, must-revalidate, proxy-revalidate";
-    }
+        #add_header P3P 'CP="ALL DSP COR PSAa PSDa OUR NOR ONL UNI COM NAV"';
+        #add_header Strict-Transport-Security max-age=15768000;
+        #add_header Access-Control-Allow-Origin *;
+        #add_header X-Clacks-Overhead "GNU Terry Pratchett";
 
-    location /media/ {
-        alias /opt/zdsenv/ZesteDeSavoir/media/;
-        expires 1y;
-        add_header Pragma public;
-        add_header Cache-Control "public, must-revalidate, proxy-revalidate";
-    }
-
-    location / {
-        if ($uri !~ \. ){
-            rewrite ^(.*[^/])$ $1/ permanent;
-        }
-        rewrite ^/teasing/$ / permanent;
-        client_max_body_size 100M;
-
-        add_header P3P 'CP="ALL DSP COR PSAa PSDa OUR NOR ONL UNI COM NAV"';
-        add_header Strict-Transport-Security max-age=15768000;
-        add_header Access-Control-Allow-Origin *;
-        add_header X-Clacks-Overhead "GNU Terry Pratchett";
-
-        try_files $uri $uri/ @app @maintenance;
-    }
+        #try_files @app;
+        #proxy_pass http://zdsappserver;
+    #}
 
     location @app {
         include conf.d/proxy.conf;
-
+	proxy_intercept_errors on;
         proxy_pass http://zdsappserver;
+
+	error_page 502 @maintenance; # Failed to communicate with upstream
     }
 
     location @maintenance {
@@ -72,15 +56,12 @@ server {
     }
 
     # Error pages
-    error_page 500 502 503 504 /errors/500.html;
-    location /errors/ {
-        alias /opt/zdsenv/ZesteDeSavoir/errors/;
-    }
+    error_page 500 503 504 /errors/500.html;
 }
 
-server {
-    server_name uploads.beta.zestedesavoir.com;
-    root /home/zds/tutos_sdzv3/images_distantes;
-    index index.html index.htm;
-}
+#server {
+#    server_name uploads.beta.zestedesavoir.com;
+#    root /home/zds/tutos_sdzv3/images_distantes;
+#    index index.html index.htm;
+#}
 

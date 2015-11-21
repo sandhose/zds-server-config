@@ -10,7 +10,7 @@ fi;
 CONF=$CONFIG_ROOT/nginx/conf.d/upstream.conf;
 CONF_TPL=$CONFIG_ROOT/nginx/conf.d/upstream.conf.tpl;
 VERSION=$1;
-SOCKET=/var/run/zds-$VERSION.socket;
+SOCKET=/run/zestedesavoir/$VERSION-socket;
 SOCKETS="";
 
 if [ -f $CONF ]; then
@@ -18,7 +18,7 @@ if [ -f $CONF ]; then
 	# 2. Extract versions
 	SOCKETS="$(\
 		sed -n '/BEGIN DYNAMIC UPSTREAMS/,/END DYNAMIC UPSTREAMS/p' $CONF | \
-		perl -n -e'/server ([[:alnum:]\/\.-]+)( down)?\;/ && print "$1\\n"' \
+		perl -n -e'/server unix:([[:alnum:]\/\.-]+)( down)?\;/ && print "$1\\n"' \
 	)";
 	COUNT=$(echo $SOCKETS | sed '/^\s*$/d' | wc -l);
 	echo "\033[32m → $COUNT old upstreams found\033[0m";
@@ -36,9 +36,9 @@ UPSTREAMS="";
 for S in $SOCKETS;
 do
 	if [ $S = $SOCKET ]; then
-		UPSTREAMS="$UPSTREAMS  server $S;\\n"
+		UPSTREAMS="$UPSTREAMS  server unix:$S;\\n"
 	else
-		UPSTREAMS="$UPSTREAMS  server $S down;\\n"
+		UPSTREAMS="$UPSTREAMS  server unix:$S down;\\n"
 	fi;
 done;
 
