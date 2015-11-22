@@ -25,27 +25,24 @@ server {
 
     root /opt/zestedesavoir/data/static-files/;
     autoindex off;
-    try_files $uri $uri/ @app;
 
-    #location / {
-    #    if ($uri !~ \. ){
-    #        rewrite ^(.*[^/])$ $1/ permanent;
-    #    }
-    #    rewrite ^/teasing/$ / permanent;
-    #    client_max_body_size 100M;
+    location / {
+        if ($uri !~ \. ){
+            rewrite ^(.*[^/])$ $1/ permanent;
+        }
+        rewrite ^/teasing/$ / permanent;
+        client_max_body_size 100M;
 
-        #add_header P3P 'CP="ALL DSP COR PSAa PSDa OUR NOR ONL UNI COM NAV"';
-        #add_header Strict-Transport-Security max-age=15768000;
-        #add_header Access-Control-Allow-Origin *;
-        #add_header X-Clacks-Overhead "GNU Terry Pratchett";
+        add_header P3P 'CP="ALL DSP COR PSAa PSDa OUR NOR ONL UNI COM NAV"';
+        add_header Strict-Transport-Security max-age=15768000;
+        add_header Access-Control-Allow-Origin *;
+        add_header X-Clacks-Overhead "GNU Terry Pratchett";
 
-        #try_files @app;
-        #proxy_pass http://zdsappserver;
-    #}
+	error_page 403 404 = @app;
+    }
 
     location @app {
         include conf.d/proxy.conf;
-	proxy_intercept_errors on;
         proxy_pass http://zdsappserver;
 
 	error_page 502 @maintenance; # Failed to communicate with upstream
