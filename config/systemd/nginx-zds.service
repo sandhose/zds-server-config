@@ -1,0 +1,14 @@
+[Unit]
+Description=A high performance web server and a reverse proxy server - ZdS
+After=syslog.target network.target
+
+[Service]
+Type=forking
+PIDFile=/run/nginx-zds.pid
+ExecStartPre=/usr/sbin/nginx -p /opt/zestedesavoir/config/nginx/ -c nginx.conf -t -q -g 'pid /run/nginx-zds.pid; daemon on; master_process on;'
+ExecStart=/usr/sbin/nginx -p /opt/zestedesavoir/config/nginx/ -c nginx.conf -g 'pid /run/nginx-zds.pid; daemon on; master_process on;'
+ExecReload=/usr/sbin/nginx -p /opt/zestedesavoir/config/nginx/ -c nginx.conf -g 'pid /run/nginx-zds.pid; daemon on; master_process on;' -s reload
+ExecStop=/usr/sbin/nginx -p /opt/zestedesavoir/config/nginx/ -c nginx.conf -g 'pid /run/nginx-zds.pid;' -s quit
+
+[Install]
+WantedBy=multi-user.target
