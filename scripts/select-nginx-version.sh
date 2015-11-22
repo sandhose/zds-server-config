@@ -13,34 +13,36 @@ VERSION=$1;
 SOCKET=/run/zestedesavoir/$VERSION-socket;
 SOCKETS="";
 
-if [ -f $CONF ]; then
-	# 1. Extract upstreams block
-	# 2. Extract versions
-	SOCKETS="$(\
-		sed -n '/BEGIN DYNAMIC UPSTREAMS/,/END DYNAMIC UPSTREAMS/p' $CONF | \
-		perl -n -e'/server unix:([[:alnum:]\/\.-]+)( down)?\;/ && print "$1\\n"' \
-	)";
-	COUNT=$(echo $SOCKETS | sed '/^\s*$/d' | wc -l);
-	echo "\033[32m → $COUNT old upstreams found\033[0m";
+if [ "$1" = "clear" ]; then
+	BLOCK="  server unix:/dev/null down"
 else
-	echo "\033[33m → No old upstream conf file found\033[0m";
-fi;
-
-SOCKETS="$SOCKETS$SOCKET";
-
-SOCKETS=$(echo $SOCKETS | sort -u | perl -pe "s/\\n/ /g");
-
-echo $SOCKETS;
-
-UPSTREAMS="";
-for S in $SOCKETS;
-do
-	if [ $S = $SOCKET ]; then
-		UPSTREAMS="$UPSTREAMS  server unix:$S;\\n"
+	if [ -f $CONF ]; then
+		# 1. Extract upstreams block
+		# 2. Extract versions
+		SOCKETS="$(\
+			sed -n '/BEGIN DYNAMIC UPSTREAMS/,/END DYNAMIC UPSTREAMS/p' $CONF | \
+			perl -n -e'/server unix:([[:alnum:]\/\.-]+)( down)?\;/ && print "$1\\n"' \
+		)";
+		COUNT=$(echo $SOCKETS | sed '/^\s*$/d' | wc -l);
+		echo "\033[32m → $COUNT old upstreams found\033[0m";
 	else
-		UPSTREAMS="$UPSTREAMS  server unix:$S down;\\n"
+		echo "\033[33m → No old upstream conf file found\033[0m";
 	fi;
-done;
+
+	SOCKETS="$SOCKETS$SOCKET";
+
+	SOCKETS=$(echo $SOCKETS | sort -u | perl -pe "s/\\n/ /g");
+
+	UPSTREAMS="";
+	for S in $SOCKETS;
+	do
+		if [ $S = $SOCKET ]; then
+			UPSTREAMS="$UPSTREAMS  server unix:$S;\\n"
+		else
+			UPSTREAMS="$UPSTREAMS  server unix:$S down;\\n"
+		fi;
+	done;
+fi
 
 BLOCK="# BEGIN DYNAMIC UPSTREAMS\n\
 $UPSTREAMS  # END DYNAMIC UPSTREAMS";

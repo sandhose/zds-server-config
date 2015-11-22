@@ -42,6 +42,15 @@ for F in `ls $CONFIG_ROOT/systemd/`; do
 	ln -s $CONFIG_ROOT/systemd/$F /etc/systemd/system/
 done
 
+if ! [ -f $CONFIG_ROOT/nginx/conf.d/upstream.conf ]; then
+	sh $SCRIPTS_ROOT/select-nginx-version.sh clear
+fi
+
+if ! [ -d /var/log/zestedesavoir/ ]; then
+	mkdir -p /var/log/zestedesavoir/
+	chown zds:zds /var/log/zestedesavoir/
+fi
+
 systemctl daemon-reload
 
 systemctl is-active nginx.service >/dev/null 2>/dev/null
